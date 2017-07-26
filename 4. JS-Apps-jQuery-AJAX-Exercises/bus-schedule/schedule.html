@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Bus Schedule</title>
+    <style>
+        #schedule {
+            text-align: center;
+            width: 400px;
+        }
+        
+        input {
+            width: 120px;
+        }
+        
+        #info {
+            background-color: aquamarine;
+            border: 1px solid black;
+            margin: 0.25em;
+        }
+        
+        .info {
+            font-size: 1.5em;
+            padding: 0.25em;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+</head>
+
+<body>
+    <div id="schedule">
+        <div id="info"><span class="info">Not Connected</span></div>
+        <div id="controls">
+            <input id="depart" value="Depart" type="button" onclick="result.depart()">
+            <input id="arrive" value="Arrive" type="button" onclick="result.arrive()" disabled="true">
+        </div>
+    </div>
+    <script>
+        function solve() {
+            return {
+                busState: 'stopped',
+                nextStopId: 'depot',
+                currenStopId: '',
+                depart: function() {
+                    if (this.busState === 'stopped') {
+                        let that = this;
+                        $.ajax({
+                            url: `https://judgetests.firebaseio.com/schedule/${this.nextStopId}.json`,
+                            success: function(data, status, xhr) {
+                                if (data) {
+                                    $('#info span').text(`Next stop ${data.name}`);
+                                    that.nextStopId = data.next;
+                                    that.currenStopId = data.name;
+                                } else {
+                                    $('#info span').text(`Error`);
+                                    $('#arrive').attr('disabled', 'true');
+                                    $('#depart').attr('disabled', 'true');
+                                }
+                            }
+                        })
+
+                        $('#arrive').removeAttr('disabled')
+                        $('#depart').attr('disabled', 'true')
+                        this.busState = 'moving';
+                    }
+                },
+                arrive: function() {
+                    if (this.busState === 'moving') {
+                        $('#info span').text(`Arriving at ${this.currenStopId}`);
+                        $('#depart').removeAttr('disabled')
+                        $('#arrive').attr('disabled', 'true')
+                        this.busState = 'stopped';
+                    }
+                }
+            };
+        }
+        let result = solve();
+    </script>
+</body>
+
+</html>
